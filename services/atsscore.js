@@ -1,7 +1,7 @@
 require("dotenv").config();
 const Groq = require("groq-sdk");
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY3 });
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 // Function to analyze resume against job description
 const atsScore = async (resumeText, jobDescription) => {

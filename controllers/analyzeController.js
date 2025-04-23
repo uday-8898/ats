@@ -1,4 +1,4 @@
-const { analyzeResume } = require("../services/openAiService");
+// const { analyzeResume } = require("../services/openAiService");
 const { atsScore } = require("../services/atsscore");
 const PdfService = require("../services/pdfService");
 const ExcelService = require("../services/excelServices");

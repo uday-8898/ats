@@ -62,3 +62,8 @@ const cleanup = () => {
     process.exit();
   });
 });
+
+
+app.get("/", (req, res) => {
+  res.send("Server is running on port 5001");
+});

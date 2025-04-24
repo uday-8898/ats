@@ -4,10 +4,12 @@ const ExcelService = require("../services/excelServices");
 
 const analyzeSingleResume = async (req, res) => {
   try {
+    // Ensure a file is uploaded
     if (!req.file) {
       return res.status(400).json({ error: "No file uploaded" });
     }
 
+    // Ensure job description is provided
     const jobDescription = req.body.jobDescription;
     if (!jobDescription) {
       return res.status(400).json({ error: "Job description is required" });
@@ -21,22 +23,26 @@ const analyzeSingleResume = async (req, res) => {
     const analysis = await atsScore(resumeText, jobDescription);
     console.log("✅ Analysis complete:", analysis);
 
+    // Clean up the temporary file
     PdfService.cleanup(req.file.path);
     console.log("🧹 Temporary file cleaned:", req.file.path);
 
-    res.json(analysis);
+    // Return the analysis result
+    res.status(200).json(analysis);
   } catch (error) {
     console.error("❌ Error analyzing single resume:", error);
-    res.status(500).json({ error: "Error analyzing resume" });
+    res.status(500).json({ error: "Error analyzing resume", details: error.message });
   }
 };
 
 const analyzeMultipleResumes = async (req, res) => {
   try {
+    // Ensure files are uploaded
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ error: "No files uploaded" });
     }
 
+    // Ensure job description is provided
     const jobDescription = req.body.jobDescription;
     if (!jobDescription) {
       return res.status(400).json({ error: "Job description is required" });
@@ -46,6 +52,7 @@ const analyzeMultipleResumes = async (req, res) => {
     const totalFiles = req.files.length;
     let processedCount = 0;
 
+    // Process each file
     for (const file of req.files) {
       try {
         console.log(`\n📄 Processing file ${++processedCount}/${totalFiles}: ${file.originalname}`);
@@ -84,16 +91,19 @@ const analyzeMultipleResumes = async (req, res) => {
         });
       }
 
-      // Optional delay
+      // Optional delay between processing files
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
 
     console.log("\n📊 All resumes processed. Creating Excel...");
+    // Sort the results based on job score (jScore)
     results.sort((a, b) => b.jScore - a.jScore);
 
+    // Generate the Excel file
     const { fileName, filePath } = ExcelService.generateExcelFile(results);
     console.log(`✅ Excel generated: ${fileName}`);
 
+    // Send the Excel file as a download
     res.download(filePath, fileName, (err) => {
       if (err) {
         console.error("❌ Error sending Excel:", err);
@@ -101,6 +111,7 @@ const analyzeMultipleResumes = async (req, res) => {
       }
 
       console.log(`📤 Excel sent: ${fileName}`);
+      // Clean up the generated Excel file
       ExcelService.cleanup(filePath);
       console.log("🧹 Excel file cleaned up");
     });

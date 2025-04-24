@@ -16,11 +16,18 @@ app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 // Configure CORS
 app.use(
   cors({
-    origin: "https://ats-ui-fxhpahcebed8aze3.centralindia-01.azurewebsites.net/",
+    origin: [
+      "http://localhost:5173", // local dev (Vite)
+      "https://ats-ui-fxhpahcebed8aze3.centralindia-01.azurewebsites.net", // production
+    ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
-  }),
+    credentials: true, // Allow cookies or auth headers if needed
+  })
 );
+
+// Preflight support
+app.options("*", cors());
 
 // Ensure required directories exist
 const uploadDir = path.join(__dirname, "uploads");

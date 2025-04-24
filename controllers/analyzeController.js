@@ -1,4 +1,3 @@
-// const { analyzeResume } = require("../services/openAiService");
 const { atsScore } = require("../services/atsscore");
 const PdfService = require("../services/pdfService");
 const ExcelService = require("../services/excelServices");
@@ -14,18 +13,20 @@ const analyzeSingleResume = async (req, res) => {
       return res.status(400).json({ error: "Job description is required" });
     }
 
-    // Extract text from PDF
+    console.log("➡️ Extracting text from uploaded file:", req.file.path);
     const resumeText = await PdfService.extractText(req.file.path);
+    console.log("✅ Text extraction successful");
 
-    // Analyze resume
-    const analysis = await analyzeResume(resumeText, jobDescription);
+    console.log("➡️ Running ATS analysis...");
+    const analysis = await atsScore(resumeText, jobDescription);
+    console.log("✅ Analysis complete:", analysis);
 
-    // Clean up uploaded file
     PdfService.cleanup(req.file.path);
+    console.log("🧹 Temporary file cleaned:", req.file.path);
 
     res.json(analysis);
   } catch (error) {
-    console.error("Error analyzing resume:", error);
+    console.error("❌ Error analyzing single resume:", error);
     res.status(500).json({ error: "Error analyzing resume" });
   }
 };
@@ -42,26 +43,20 @@ const analyzeMultipleResumes = async (req, res) => {
     }
 
     const results = [];
-    let processedCount = 0;
     const totalFiles = req.files.length;
+    let processedCount = 0;
 
-    // Process files sequentially
     for (const file of req.files) {
       try {
-        console.log(
-          `Processing file ${++processedCount} of ${totalFiles}: ${file.originalname}`
-        );
-
-        // Extract text from PDF
+        console.log(`\n📄 Processing file ${++processedCount}/${totalFiles}: ${file.originalname}`);
+        console.log("➡️ Extracting text...");
         const resumeText = await PdfService.extractText(file.path);
-        console.log(`PDF text extracted successfully for ${file.originalname}`);
+        console.log("✅ Text extracted");
 
-        // Process with atsscore.js
-        console.log(`Analyzing resume with ATS Score system...`);
+        console.log("➡️ Analyzing with ATS Score...");
         const analysis = await atsScore(resumeText, jobDescription);
-        console.log(`Analysis completed for ${file.originalname}:`, analysis);
+        console.log("✅ Analysis done:", analysis);
 
-        // Format and store result
         const result = {
           fileName: file.originalname,
           name: analysis.name || "Unknown",
@@ -73,13 +68,10 @@ const analyzeMultipleResumes = async (req, res) => {
         };
 
         results.push(result);
-        console.log(`Added result for ${file.originalname}`);
-
-        // Clean up the processed file
         PdfService.cleanup(file.path);
-        console.log(`Cleaned up temporary file for ${file.originalname}`);
+        console.log("🧹 Cleaned:", file.originalname);
       } catch (fileError) {
-        console.error(`Error processing ${file.originalname}:`, fileError);
+        console.error(`❌ Error processing ${file.originalname}:`, fileError);
         results.push({
           fileName: file.originalname,
           name: "Error",
@@ -92,38 +84,34 @@ const analyzeMultipleResumes = async (req, res) => {
         });
       }
 
-      // Optional: Add a small delay between processing files
+      // Optional delay
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
 
-    console.log("All files processed. Generating Excel file...");
-
-    // Sort results by jScore in descending order
+    console.log("\n📊 All resumes processed. Creating Excel...");
     results.sort((a, b) => b.jScore - a.jScore);
 
-    // Generate Excel file with detailed results
     const { fileName, filePath } = ExcelService.generateExcelFile(results);
-    console.log(`Excel file generated: ${fileName}`);
+    console.log(`✅ Excel generated: ${fileName}`);
 
-    // Send the Excel file to client
     res.download(filePath, fileName, (err) => {
       if (err) {
-        console.error("Error sending Excel file:", err);
+        console.error("❌ Error sending Excel:", err);
         return res.status(500).json({ error: "Error sending file" });
       }
-      console.log(`Excel file sent successfully: ${fileName}`);
-      // Clean up the Excel file after sending
+
+      console.log(`📤 Excel sent: ${fileName}`);
       ExcelService.cleanup(filePath);
+      console.log("🧹 Excel file cleaned up");
     });
   } catch (error) {
-    console.error("Error in analyzeMultipleResumes:", error);
+    console.error("❌ Error in analyzeMultipleResumes:", error);
     res.status(500).json({
       error: "Error processing resumes",
       details: error.message,
     });
   }
 };
-
 
 module.exports = {
   analyzeSingleResume,

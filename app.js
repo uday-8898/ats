@@ -17,8 +17,6 @@ app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 app.use(
   cors({
     origin: [
-      "*"
-      "http://localhost:5173/", // local dev (Vite)
       "https://ats-ui-fxhpahcebed8aze3.centralindia-01.azurewebsites.net", // production
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],

@@ -9,6 +9,7 @@ const commRoutes = require("./routes/commRoutes");
 
 const app = express();
 dotenv.config();
+
 // Increase payload size limit for large files
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
@@ -18,6 +19,7 @@ app.use(
   cors({
     origin: [
       "https://ats-ui-fxhpahcebed8aze3.centralindia-01.azurewebsites.net", // production
+      "http://localhost:3000", // development (if applicable)
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -42,6 +44,12 @@ const outputDir = path.join(__dirname, "output");
 app.use("/api/analyze", analyzeRoutes);
 app.use("/api/form", formRoutes);
 app.use("/api/communication", commRoutes);
+
+// Error handling middleware for async errors
+app.use((err, req, res, next) => {
+  console.error("Error occurred:", err);
+  res.status(500).json({ error: "Internal Server Error", details: err.message });
+});
 
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
@@ -69,7 +77,7 @@ const cleanup = () => {
   });
 });
 
-
+// Health check route
 app.get("/", (req, res) => {
-  res.send("Server is running on port 5001");
+  res.send("Server is running on port " + PORT);
 });

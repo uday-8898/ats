@@ -21,6 +21,7 @@ app.use(
       "https://ats-ui-fxhpahcebed8aze3.centralindia-01.azurewebsites.net", // production
       "http://localhost:3000", // optional (if you use this port sometimes)
       "http://localhost:5173", // your current dev frontend
+      "*",
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],

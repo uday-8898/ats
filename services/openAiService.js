@@ -142,23 +142,28 @@ const analyzeResume = async (resumeText, jobDescription) => {
         },
       ],
       model: "llama3-70b-8192", // Adjust the model if needed
-      // max_tokens: 1000, // Set token limit to 1000
     });
 
-    // Log response to check the data structure
-    //console.log(response);
     const { choices } = response;
     if (choices && choices[0]?.message?.content) {
       const rawContent = choices[0].message.content;
-      console.log("Raw Content: ", rawContent);
-      // Now we'll trim the content to extract only the relevant parts between "Matched Skills" and "Score"
+      console.log("Raw Content: ", rawContent); // Log raw content to debug
+
       const trimmedContent = extractRelevantJSON(rawContent);
       console.log("-----------------trimmed_data_receive-----------------");
-      console.log("Trimmed Content: ", trimmedContent);
+      console.log("Trimmed Content: ", trimmedContent); // Log the trimmed content
+
       console.log("-----------------trimmed_data_send-----------------");
-      const result = JSON.parse(trimmedContent); // Parse the trimmed JSON content
-      console.log("Result: ", result);
-      return result;
+
+      try {
+        const result = JSON.parse(trimmedContent);
+        console.log("Result: ", result);
+        return result;
+      } catch (err) {
+        console.error("JSON Parse Error:", err.message);
+        console.error("Problematic Content:", trimmedContent);
+        return { error: "Invalid JSON format received." };
+      }
     } else {
       console.log("No matches found.");
       return {
@@ -166,26 +171,33 @@ const analyzeResume = async (resumeText, jobDescription) => {
       };
     }
   } catch (error) {
-    console.error(error);
+    console.error("Unexpected error:", error);
+    return { error: "Unexpected error occurred during analysis." };
   }
 };
 
-// Helper function to extract JSON data from "Matched Skills" to "Score"
+// Helper function to extract JSON data using balanced braces
 const extractRelevantJSON = (content) => {
-  const startMarker = '"Job Title Match"';
-  const endMarker = '"GScore"';
-  const startIndex = content.indexOf(startMarker);
-  const endIndex = content.indexOf(endMarker) + endMarker.length + 5; // Adjust to capture full content
+  const firstBraceIndex = content.indexOf('{');
+  if (firstBraceIndex === -1) return "{}";
 
-  if (startIndex !== -1 && endIndex !== -1) {
-    const trimmedContent = content.substring(startIndex, endIndex);
-    console.log("---------------trim--------------------");
-    console.log(trimmedContent);
-    console.log("----------------trim-------------------");
-    return `{${trimmedContent}}`; // Wrap it in curly braces to make it a valid JSON object
+  let braceCount = 0;
+  let endIndex = -1;
+
+  for (let i = firstBraceIndex; i < content.length; i++) {
+    if (content[i] === '{') braceCount++;
+    else if (content[i] === '}') braceCount--;
+
+    if (braceCount === 0) {
+      endIndex = i;
+      break;
+    }
   }
 
-  // If markers are not found, return an empty object
+  if (endIndex !== -1) {
+    return content.substring(firstBraceIndex, endIndex + 1);
+  }
+
   return "{}";
 };
 

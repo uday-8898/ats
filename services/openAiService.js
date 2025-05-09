@@ -152,9 +152,9 @@ Important:
       console.log("-----------------raw_data_send-----------------");
 
       try {
-        const result = JSON.parse(rawContent);
-        console.log("Result: ", result);
-        return result;
+        const results = JSON.parse(rawContent);
+        console.log("Results: ", results);
+        return results;
       } catch (err) {
         console.error("JSON Parse Error:", err.message);
         console.error("Problematic Content:", rawContent);

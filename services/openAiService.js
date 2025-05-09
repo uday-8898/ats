@@ -152,33 +152,21 @@ Important:
       console.log("-----------------raw_data_send-----------------");
 
       try {
-        const result = JSON.parse(rawContent);
-        console.log("Result: ", result);
-        return {
-          raw: rawContent,
-          parsed: result
-        };
+        const results = JSON.parse(rawContent);
+        console.log("Results: ", results);
+        return results;
       } catch (err) {
         console.error("JSON Parse Error:", err.message);
         console.error("Problematic Content:", rawContent);
-        return {
-          raw: rawContent,
-          error: "Invalid JSON format received."
-        };
+        return { error: "Invalid JSON format received." };
       }
     } else {
       console.log("No matches found.");
-      return {
-        raw: null,
-        matches: "No matches found."
-      };
+      return { matches: "No matches found." };
     }
   } catch (error) {
     console.error("Unexpected error:", error);
-    return {
-      raw: null,
-      error: "Unexpected error occurred during analysis."
-    };
+    return { error: "Unexpected error occurred during analysis." };
   }
 };
 
